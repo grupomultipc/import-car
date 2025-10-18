@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Importación de Vehículos</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --accent: #e74c3c;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+            --success: #2ecc71;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: var(--primary);
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+        }
+        
+        .calculator {
+            background-color: white;
+            border-radius: 8px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus, select:focus {
+            border-color: var(--secondary);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+        
+        .cost-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .vehicle-type {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .vehicle-option {
+            flex: 1;
+            text-align: center;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .vehicle-option:hover {
+            border-color: var(--secondary);
+        }
+        
+        .vehicle-option.selected {
+            border-color: var(--secondary);
+            background-color: rgba(52, 152, 219, 0.1);
+        }
+        
+        .vehicle-option input {
+            display: none;
+        }
+        
+        .results {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: var(--light);
+            border-radius: 8px;
+            display: none;
+        }
+        
+        .results.active {
+            display: block;
+        }
+        
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .result-total {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: var(--accent);
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px solid var(--dark);
+        }
+        
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background-color: var(--secondary);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-top: 20px;
+        }
+        
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        
+        .btn-reset {
+            background-color: #95a5a6;
+        }
+        
+        .btn-reset:hover {
+            background-color: #7f8c8d;
+        }
+        
+        .currency-info {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+        
+        @media (max-width: 600px) {
+            .cost-inputs {
+                grid-template-columns: 1fr;
+            }
+            
+            .vehicle-type {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Calculadora de Importación de Vehículos</h1>
+            <p>Calcule el costo total de importar un vehículo a Guatemala</p>
+        </header>
+        
+        <div class="calculator">
+            <div class="form-group">
+                <label for="exchangeRate">Tasa de cambio (USD a GTQ):</label>
+                <input type="number" id="exchangeRate" step="0.01" min="0" value="7.75" placeholder="Ingrese la tasa de cambio">
+                <div class="currency-info">Ingrese el valor de 1 USD en Quetzales</div>
+            </div>
+            
+            <div class="form-group">
+                <label>Tipo de vehículo:</label>
+                <div class="vehicle-type">
+                    <div class="vehicle-option" data-value="sedan">
+                        <input type="radio" id="sedan" name="vehicleType" value="sedan" checked>
+                        <label for="sedan">Sedán o SUV (32% impuesto)</label>
+                    </div>
+                    <div class="vehicle-option" data-value="pickup">
+                        <input type="radio" id="pickup" name="vehicleType" value="pickup">
+                        <label for="pickup">Pickup o Camión (17% impuesto)</label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="purchasePrice">Precio de compra (USD):</label>
+                <input type="number" id="purchasePrice" step="0.01" min="0" placeholder="Ingrese el precio de compra">
+            </div>
+            
+            <div class="cost-inputs">
+                <div class="form-group">
+                    <label for="towPrice">Precio de grúa (USD):</label>
+                    <input type="number" id="towPrice" step="0.01" min="0" value="0" placeholder="Ingrese precio de grúa">
+                </div>
+                
+                <div class="form-group">
+                    <label for="transportPrice">Precio de transporte (USD):</label>
+                    <input type="number" id="transportPrice" step="0.01" min="0" value="0" placeholder="Ingrese precio de transporte">
+                </div>
+                
+                <div class="form-group">
+                    <label for="repairPrice">Precio de reparación (USD):</label>
+                    <input type="number" id="repairPrice" step="0.01" min="0" value="0" placeholder="Ingrese precio de reparación">
+                </div>
+                
+                <div class="form-group">
+                    <label for="otherPrice">Otros costos (USD):</label>
+                    <input type="number" id="otherPrice" step="0.01" min="0" value="0" placeholder="Ingrese otros costos">
+                </div>
+            </div>
+            
+            <button id="calculateBtn" class="btn">Calcular Costo Total</button>
+            <button id="resetBtn" class="btn btn-reset">Limpiar Formulario</button>
+            
+            <div id="results" class="results">
+                <h2>Resumen de Costos</h2>
+                <div class="result-item">
+                    <span>Precio de compra:</span>
+                    <span id="purchasePriceResult">Q 0.00</span>
+                </div>
+                <div class="result-item">
+                    <span>Impuestos:</span>
+                    <span id="taxResult">Q 0.00</span>
+                </div>
+                <div class="result-item">
+                    <span>Grúa:</span>
+                    <span id="towResult">Q 0.00</span>
+                </div>
+                <div class="result-item">
+                    <span>Transporte:</span>
+                    <span id="transportResult">Q 0.00</span>
+                </div>
+                <div class="result-item">
+                    <span>Reparación:</span>
+                    <span id="repairResult">Q 0.00</span>
+                </div>
+                <div class="result-item">
+                    <span>Otros costos:</span>
+                    <span id="otherResult">Q 0.00</span>
+                </div>
+                <div class="result-item result-total">
+                    <span>COSTO TOTAL:</span>
+                    <span id="totalResult">Q 0.00</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Elementos del DOM
+            const exchangeRateInput = document.getElementById('exchangeRate');
+            const vehicleOptions = document.querySelectorAll('.vehicle-option');
+            const purchasePriceInput = document.getElementById('purchasePrice');
+            const towPriceInput = document.getElementById('towPrice');
+            const transportPriceInput = document.getElementById('transportPrice');
+            const repairPriceInput = document.getElementById('repairPrice');
+            const otherPriceInput = document.getElementById('otherPrice');
+            const calculateBtn = document.getElementById('calculateBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            const resultsDiv = document.getElementById('results');
+            
+            // Elementos de resultados
+            const purchasePriceResult = document.getElementById('purchasePriceResult');
+            const taxResult = document.getElementById('taxResult');
+            const towResult = document.getElementById('towResult');
+            const transportResult = document.getElementById('transportResult');
+            const repairResult = document.getElementById('repairResult');
+            const otherResult = document.getElementById('otherResult');
+            const totalResult = document.getElementById('totalResult');
+            
+            // Función para formatear números con comas
+            function formatNumberWithCommas(number) {
+                return number.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            }
+            
+            // Manejo de selección de tipo de vehículo
+            vehicleOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    // Quitar selección anterior
+                    vehicleOptions.forEach(opt => opt.classList.remove('selected'));
+                    // Añadir selección actual
+                    this.classList.add('selected');
+                    // Marcar el radio button correspondiente
+                    const radio = this.querySelector('input[type="radio"]');
+                    radio.checked = true;
+                });
+            });
+            
+            // Inicializar selección
+            document.querySelector('.vehicle-option:first-child').classList.add('selected');
+            
+            // Función para calcular el costo total
+            function calculateTotalCost() {
+                // Obtener valores de entrada
+                const exchangeRate = parseFloat(exchangeRateInput.value) || 0;
+                const purchasePrice = parseFloat(purchasePriceInput.value) || 0;
+                const towPrice = parseFloat(towPriceInput.value) || 0;
+                const transportPrice = parseFloat(transportPriceInput.value) || 0;
+                const repairPrice = parseFloat(repairPriceInput.value) || 0;
+                const otherPrice = parseFloat(otherPriceInput.value) || 0;
+                
+                // Determinar el tipo de vehículo y tasa de impuesto
+                const vehicleType = document.querySelector('input[name="vehicleType"]:checked').value;
+                const taxRate = vehicleType === 'sedan' ? 0.32 : 0.17;
+                
+                // Calcular impuestos
+                const taxAmount = purchasePrice * taxRate;
+                
+                // Calcular total en USD
+                const totalUSD = purchasePrice + taxAmount + towPrice + transportPrice + repairPrice + otherPrice;
+                
+                // Convertir a Quetzales
+                const totalGTQ = totalUSD * exchangeRate;
+                const purchasePriceGTQ = purchasePrice * exchangeRate;
+                const taxGTQ = taxAmount * exchangeRate;
+                const towGTQ = towPrice * exchangeRate;
+                const transportGTQ = transportPrice * exchangeRate;
+                const repairGTQ = repairPrice * exchangeRate;
+                const otherGTQ = otherPrice * exchangeRate;
+                
+                // Mostrar resultados
+                purchasePriceResult.textContent = `Q ${formatNumberWithCommas(purchasePriceGTQ)}`;
+                taxResult.textContent = `Q ${formatNumberWithCommas(taxGTQ)}`;
+                towResult.textContent = `Q ${formatNumberWithCommas(towGTQ)}`;
+                transportResult.textContent = `Q ${formatNumberWithCommas(transportGTQ)}`;
+                repairResult.textContent = `Q ${formatNumberWithCommas(repairGTQ)}`;
+                otherResult.textContent = `Q ${formatNumberWithCommas(otherGTQ)}`;
+                totalResult.textContent = `Q ${formatNumberWithCommas(totalGTQ)}`;
+                
+                // Mostrar sección de resultados
+                resultsDiv.classList.add('active');
+            }
+            
+            // Función para limpiar el formulario
+            function resetForm() {
+                exchangeRateInput.value = 7.75;
+                purchasePriceInput.value = '';
+                towPriceInput.value = 0;
+                transportPriceInput.value = 0;
+                repairPriceInput.value = 0;
+                otherPriceInput.value = 0;
+                
+                // Restablecer selección de vehículo
+                vehicleOptions.forEach(opt => opt.classList.remove('selected'));
+                document.querySelector('.vehicle-option:first-child').classList.add('selected');
+                document.getElementById('sedan').checked = true;
+                
+                // Ocultar resultados
+                resultsDiv.classList.remove('active');
+            }
+            
+            // Event listeners
+            calculateBtn.addEventListener('click', calculateTotalCost);
+            resetBtn.addEventListener('click', resetForm);
+            
+            // Permitir calcular con Enter
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    calculateTotalCost();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
